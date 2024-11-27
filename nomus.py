@@ -12,10 +12,11 @@ import time
 import pandas as pd
 import os
 
+arquivo_excel = r'Z:\PUBLICO\Araujo\Cadastros\Cadastros.xlsx'
+arquivo_excel_01 = r'Z:\PUBLICO\Araujo\Cadastros\edicao.xlsx'
 
 
 def criar_janela_cadastro_produtos():
-    arquivo_excel = r'Z:\PUBLICO\Araujo\Cadastros\Cadastros.xlsx'
     df = pd.read_excel(arquivo_excel, sheet_name='Cadastro')
 
     servico = Service(ChromeDriverManager().install())
@@ -283,12 +284,12 @@ def criar_janela_cadastro_produtos():
                     
         cadastrar_produto(ncm_excel, cod, descricao, und, tipo, grupo, metodo, descricao_fiscal, pcp_ressuprimento, custo_padrao, dia_atual, financeiro_excel)
 
+
 def criar_janela_planilha_cadastro():
-    arquivo_excel = r'Z:\PUBLICO\Araujo\Cadastros\Cadastros.xlsx'
     os.startfile(arquivo_excel)
 
+
 def criar_janela_lista_de_materiais():
-    arquivo_excel = r'Z:\PUBLICO\Araujo\Cadastros\Cadastros.xlsx'
     df = pd.read_excel(arquivo_excel, sheet_name='LM')
     
     servico = Service(ChromeDriverManager().install())
@@ -413,13 +414,293 @@ def criar_janela_lista_de_materiais():
                             
         cadastrar_lm(item_lista, qtde_item_lista, natureza, posicao)
 
+
 def criar_janela_rp():
-    pass
+    df = pd.read_excel(arquivo_excel, sheet_name='RP')
+    
+    servico = Service(ChromeDriverManager().install())
+    navegador = webdriver.Chrome(service=servico) 
+
+    usuario = entry_usuario.get() 
+    senha = entry_senha.get()
+
+    index = 0
+
+    def login(usuario, senha):
+        tela_usuario = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="campologin"]')))
+        tela_usuario.send_keys(usuario)
+        tela_senha = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="login_form"]/div/main/div/section[3]/div[2]/input')))
+        tela_senha.send_keys(senha)    
+        tela_senha.send_keys(Keys.RETURN)
+
+    def entrar_nomus():
+        navegador.get('https://tspro.nomus.com.br/tspro/Login.do?metodo=PreLogin') # Tela inicial
+        login(usuario, senha)
+
+    def tela_produtos():
+        navegador.get('https://tspro.nomus.com.br/tspro/Produto.do?metodo=Pesquisar') # Produtos
+
+    def acessar_produto(cod):
+        produto_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'divMinimizavel')]/table/tbody/tr[2]/td[1]/input"))) # Código do produto
+        produto_01.clear()
+        produto_01.send_keys(cod)
+
+        botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_pesquisar"]'))) # Buscar produtos
+        botao_buscar.click()
+
+        botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, f"//*[text()='{cod}']"))) #Seleciona o elemento
+        botao_buscar.click()
+
+        xpaths = ['//*[@id="produtoAtivoAguardandoLiberacao_itemSubMenu_acessarRoteiroProduto"]', '//*[@id="produtoAtivoLiberado_itemSubMenu_acessarRoteiroProduto"]']
+        for xpath in xpaths:
+            try:
+                botao_entrar_lm = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+                botao_entrar_lm.click()
+                break
+            except Exception:
+                pass 
+
+    def adicionar_rp_no_produto(rp_padrao):
+        rp_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//table/tbody/tr[1]/td[2]/textarea')))
+        rp_01.clear()
+        rp_01.send_keys(rp_padrao)
+        try:
+            botao_rp_02 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_salvar_como_roteiro_adicional"]'))) 
+            botao_rp_02.click()
+        except:
+            botao_rp_02 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_salvar"]'))) 
+            botao_rp_02.click()
+
+    def exportar_rp_para_os_itens(rp_padrao, cod):
+        navegador.get('https://tspro.nomus.com.br/tspro/GrupoRoteiroProducao.do?metodo=pesquisarPaginado')
+
+        export_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'divMinimizavel')]/table/tbody/tr[2]/td[1]/input")))
+        export_01.clear()
+        export_01.send_keys(rp_padrao)
+
+        botao_export_02 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_pesquisarpaginado"]'))) 
+        botao_export_02.click()
+
+        botao_exxxx = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, f"//*[text()='{rp_padrao}']"))) #Seleciona o elemento
+        botao_exxxx.click()
+
+        botao_export_0222 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="grupoRoteiroProducaoSubmenu_itemSubMenu_erro.selecionar.GrupoRoteiroProducao"]'))) 
+        botao_export_0222.click()
+
+        botao_export_02222 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="ui-id-11"]'))) 
+        botao_export_02222.click()
+
+        produto_AA = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'divMinimizavel')]/table/tbody/tr[2]/td[1]/input"))) # Código do produto
+        produto_AA.clear()
+        produto_AA.send_keys(cod)
+
+        botao_send_export_02222 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_pesquisar"]'))) 
+        botao_send_export_02222.click()
+
+        time.sleep(1)
+
+        botao_export_03 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="marcaredesmarcar"]'))) 
+        botao_export_03.click()
+
+        botao_export_99 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_vincularprodutos"]'))) 
+        botao_export_99.click()
+
+        time.sleep(1)
+
+        salvar_rp_geral = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_salvar"]'))) 
+        salvar_rp_geral.click()
+
+        export_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'divMinimizavel')]/table/tbody/tr[2]/td[1]/input")))
+        export_01.send_keys(rp_padrao)
+
+        botao_export_02 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_pesquisarpaginado"]'))) 
+        botao_export_02.click()
+
+        botao_export_03 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="marcaredesmarcar"]'))) 
+        botao_export_03.click()
+
+        botao_export_04 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_Acoes"]'))) 
+        botao_export_04.click()
+
+        botao_export_05 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_exportar_roteiro_produto_template"]'))) 
+        botao_export_05.click()
+
+        export_06 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="idComportamentoExportacao"]'))) # Tipo de produto
+        select_export_06 = Select(export_06)
+        select_export_06.select_by_visible_text('Exportar roteiro excluindo todos os roteiros do produto destino')
+
+        botao_export_07 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="salvar"]'))) 
+        botao_export_07.click()
+
+        time.sleep(10)
+
+    entrar_nomus()   
+
+    for index, row in df.iterrows():
+        cod = row['Código']
+        rp_padrao = row['rot padrao']
+                    
+        tela_produtos()
+        acessar_produto(cod)
+        adicionar_rp_no_produto(rp_padrao)
+        exportar_rp_para_os_itens(rp_padrao,cod)
 
 
+def criar_janela_planilha_edicao():
+    os.startfile(arquivo_excel_01)
 
 
+def editar_itens_geral():
+    df = pd.read_excel(arquivo_excel_01, sheet_name='Principal')
 
+    servico = Service(ChromeDriverManager().install())
+    navegador = webdriver.Chrome(service=servico)
+
+    usuario = entry_usuario.get() 
+    senha = entry_senha.get()
+
+    index = 0
+
+    def login(usuario, senha):
+            tela_usuario = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="campologin"]')))
+            tela_usuario.send_keys(usuario)
+            tela_senha = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="login_form"]/div/main/div/section[3]/div[2]/input')))
+            tela_senha.send_keys(senha)    
+            tela_senha.send_keys(Keys.RETURN)
+
+    def entrar_nomus():
+        navegador.get('https://tspro.nomus.com.br/tspro/Login.do?metodo=PreLogin') # Tela inicial
+        login(usuario, senha)
+
+    def tela_produtos():
+        navegador.get('https://tspro.nomus.com.br/tspro/Produto.do?metodo=Pesquisar') # Produtos
+
+    def acessar_produto(cod):
+        produto_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'divMinimizavel')]/table/tbody/tr[2]/td[1]/input")))
+        produto_01.clear()
+        produto_01.send_keys(cod)
+
+        botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_pesquisar"]'))) # Buscar produtos
+        botao_buscar.click()
+
+        botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, f"//*[text()='{cod}']"))) #Seleciona o elemento
+        botao_buscar.click()
+
+        xpaths = ['//*[@id="produtoAtivoAguardandoLiberacao_itemSubMenu_editarProduto"]', '//*[@id="produtoAtivoLiberado_itemSubMenu_editarProduto"]']
+        for xpath in xpaths:
+            try:
+                botao_entrar_editar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+                botao_entrar_editar.click()
+                break
+            except Exception:
+                pass 
+    
+    def edicao_geral(cod_editado,descricao,und,tipo,grupo,metodo):
+        criar_produtos_02 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="nome"]')))
+        criar_produtos_02.clear()
+        criar_produtos_02.send_keys(cod_editado)
+
+        criar_produtos_03 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//table/tbody/tr[7]/td[2]/textarea'))) # Descrição do produto
+        criar_produtos_03.clear()
+        criar_produtos_03.send_keys(descricao)
+
+        unidade_medida_select = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="idUnidadeMedida"]'))) # Unidade de medida
+        select_unidade_medida = Select(unidade_medida_select)
+        select_unidade_medida.select_by_visible_text(und)
+
+        tipo_produto = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="tipoProduto_id"]'))) # Tipo de produto
+        select_tipo_produto = Select(tipo_produto)
+        select_tipo_produto.select_by_visible_text(tipo)
+
+        grupo_produto = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="nomeGrupoProduto_id_select"]'))) # Grupo de produto
+        select_grupo_produto = Select(grupo_produto)
+        select_grupo_produto.select_by_visible_text(grupo)
+
+        metodo_produto = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="idPadraoSuprimento"]'))) # Método de suprimento
+        select_metodo_produto = Select(metodo_produto)
+        select_metodo_produto.select_by_visible_text(metodo)
+
+        salvar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_salvar"]'))) # Salvar cadastro
+        salvar.click()
+
+    entrar_nomus()
+    
+    for index, row in df.iterrows():
+        cod = row['Código']
+        cod_editado = row['Novo Código']
+        descricao = row['Descrição']
+        und = row['Unidade']
+        tipo = row['Tipo do produto']
+        grupo = row['Grupo do produto']
+        metodo = row['Metodo']
+                    
+        tela_produtos()
+        acessar_produto(cod)
+        edicao_geral(cod_editado,descricao,und,tipo,grupo,metodo)
+
+
+def editar_empresas():
+    df = pd.read_excel(arquivo_excel_01, sheet_name='Empresas')
+
+    servico = Service(ChromeDriverManager().install())
+    navegador = webdriver.Chrome(service=servico)
+
+    usuario = entry_usuario.get() 
+    senha = entry_senha.get()
+
+    index = 0
+
+    def login(usuario, senha):
+            tela_usuario = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="campologin"]')))
+            tela_usuario.send_keys(usuario)
+            tela_senha = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="login_form"]/div/main/div/section[3]/div[2]/input')))
+            tela_senha.send_keys(senha)    
+            tela_senha.send_keys(Keys.RETURN)
+
+    def entrar_nomus():
+        navegador.get('https://tspro.nomus.com.br/tspro/Login.do?metodo=PreLogin') # Tela inicial
+        login(usuario, senha)
+
+    def tela_produtos():
+        navegador.get('https://tspro.nomus.com.br/tspro/Produto.do?metodo=Pesquisar') # Produtos
+
+    def acessar_produto(cod, empresa_excel):
+        produto_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'divMinimizavel')]/table/tbody/tr[2]/td[1]/input")))
+        produto_01.clear()
+        produto_01.send_keys(cod)
+
+        botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_pesquisar"]'))) # Buscar produtos
+        botao_buscar.click()
+
+        botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, f"//*[text()='{cod}']"))) #Seleciona o elemento
+        botao_buscar.click()
+
+        xpaths = ['//*[@id="produtoAtivoAguardandoLiberacao_itemSubMenu_editarProduto"]', '//*[@id="produtoAtivoLiberado_itemSubMenu_editarProduto"]']
+        for xpath in xpaths:
+            try:
+                botao_entrar_editar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+                botao_entrar_editar.click()
+                break
+            except Exception:
+                pass 
+        
+        empresa = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="ui-id-28"]'))) # Empresas
+        empresa.click()
+
+        empresa_selecao = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, empresa_excel)))
+        empresa_selecao.click()
+    
+        salvar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_salvar"]'))) # Salvar cadastro
+        salvar.click()
+
+    entrar_nomus()
+    
+    for index, row in df.iterrows():
+        cod = row['Código']
+        empresa_excel = row['Coluna1']
+                    
+        tela_produtos()
+        acessar_produto(cod, empresa_excel)
 
 
 
@@ -434,41 +715,53 @@ def criar_janela_rp():
 def criar_janela_menu_edicao():
     janela = tk.Tk()
     janela.title("Edição de itens")
-    janela.geometry("400x400")
-    
-    tk.Label(janela, text="O que será editado ?", font=("Arial", 14)).pack(pady=10)
+    janela.geometry("400x450")
+    janela.config(bg="lightblue")  
+    tk.Label(janela, text="O que será editado ?", font=("Arial", 14), bg="lightblue").pack(pady=10)
 
-    # tk.Button(janela, text="Instrução", command=instrucao, width=30, bg="purple", fg="white").pack(pady=5)
-    # tk.Button(janela, text="2023", command=criar_ordens_2023, width=30, bg="green", fg="white").pack(pady=5)
-    # tk.Button(janela, text="2024", command=criar_ordens_2024, width=30, bg="green", fg="white").pack(pady=5)
-    # tk.Button(janela, text="Resumo - Geral", command=criar_ordens_geral, width=30, bg="yellow", fg="black").pack(pady=5)
-
-    tk.Button(janela, text="Sair", command=app.quit, bg="red", fg="white", width=20).pack(pady=10)
+    tk.Button(janela, text="Abrir planilha", command=criar_janela_planilha_edicao, width=20, bg="RoyalBlue1", fg="black").pack(pady=10)
+    tk.Button(janela, text="Geral", command=editar_itens_geral, width=20, bg="turquoise1", fg="black").pack(pady=10)
+    tk.Button(janela, text="Empresas", command=editar_empresas, width=20, bg="turquoise2", fg="black").pack(pady=10)
+    tk.Button(janela, text="Fiscal", command=None, width=20, bg="turquoise3", fg="black").pack(pady=10)
+    tk.Button(janela, text="PCP", command=None, width=20, bg="PaleTurquoise2", fg="black").pack(pady=10)
+    tk.Button(janela, text="MRP", command=None, width=20, bg="SkyBlue1", fg="black").pack(pady=10)
+    tk.Button(janela, text="Custos", command=None, width=20, bg="SteelBlue1", fg="black").pack(pady=10)
 
     janela.mainloop()
 
+def criar_janela_cadastro():
+    janela_01 = tk.Tk()
+    janela_01.title("Edição de itens")
+    janela_01.geometry("400x400")
+    janela_01.config(bg="lightblue")  
+    tk.Label(janela_01, text="O que será cadastrado ?", font=("Arial", 14), bg="lightblue").pack(pady=10)
+
+    tk.Button(janela_01, text="Abrir planilha", command=criar_janela_planilha_cadastro, width=20, bg="DarkOrange2", fg="black").pack(pady=10)
+    tk.Button(janela_01, text="Cadastrar Produtos", command=criar_janela_cadastro_produtos, width=20, bg="green", fg="white").pack(pady=10)
+    tk.Button(janela_01, text="Cadastrar LM", command=criar_janela_lista_de_materiais, width=20, bg="blue", fg="white").pack(pady=10)
+    tk.Button(janela_01, text="Cadastrar RP", command=criar_janela_rp, width=20, bg="NavajoWhite4", fg="white").pack(pady=10)
+
+    janela_01.mainloop()
+
 app = tk.Tk()
 app.title("Engenharia")
-app.geometry("400x600")
+app.geometry("400x400")
+app.config(bg="lightblue")  
 
-tk.Label(app, text="Selecione a opção desejada: ", font=("Arial", 14)).pack(pady=10)
-label_usuario = tk.Label(app, text="Usuário:")
+tk.Label(app, text="Selecione a opção desejada: ", font=("Arial", 14), bg="lightblue").pack(pady=5)
+label_usuario = tk.Label(app, text="Usuário:", bg="lightblue")
 label_usuario.pack(padx=5, pady=5)
 
-entry_usuario = tk.Entry(app)
-entry_usuario.pack(padx=5, pady=10)
+entry_usuario = tk.Entry(app, bg="white", bd=2, relief="solid", justify="center")
+entry_usuario.pack(padx=5, pady=5)
 
-label_senha = tk.Label(app, text="Senha:")
-label_senha.pack(padx=5, pady=10)
+label_senha = tk.Label(app, text="Senha:",  bg="lightblue")
+label_senha.pack(padx=5, pady=5)
 
-entry_senha = tk.Entry(app, show="*")
-entry_senha.pack(padx=5, pady=10)
+entry_senha = tk.Entry(app, show="*", bg="white", bd=2, relief="solid", justify="center")
+entry_senha.pack(padx=5, pady=5)
 
-tk.Button(app, text="Abrir planilha", command=criar_janela_planilha_cadastro, width=20, bg="yellow", fg="black").pack(pady=10)
-tk.Button(app, text="Cadastrar Produtos", command=criar_janela_cadastro_produtos, width=20, bg="green", fg="white").pack(pady=10)
-tk.Button(app, text="Cadastrar LM", command=criar_janela_lista_de_materiais, width=20, bg="blue", fg="white").pack(pady=10)
-tk.Button(app, text="Editar cadastros", command=criar_janela_menu_edicao, width=20, bg="plum4", fg="white").pack(pady=10)
-
-tk.Button(app, text="Sair", command=app.quit, bg="red", fg="white", width=20).pack(pady=10)
+tk.Button(app, text="Cadastrar itens", command=criar_janela_cadastro, width=20, bg="gold", fg="black").pack(pady=10)
+tk.Button(app, text="Editar cadastros", command=criar_janela_menu_edicao, width=20, bg="goldenrod", fg="black").pack(pady=10)
 
 app.mainloop()
