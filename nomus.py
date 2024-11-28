@@ -15,7 +15,7 @@ import os
 arquivo_excel = r'Z:\PUBLICO\Araujo\Cadastros\Cadastros.xlsx'
 arquivo_excel_01 = r'Z:\PUBLICO\Araujo\Cadastros\edicao.xlsx'
 
-
+# Cadastrar o item
 def criar_janela_cadastro_produtos():
     df = pd.read_excel(arquivo_excel, sheet_name='Cadastro')
 
@@ -120,7 +120,7 @@ def criar_janela_cadastro_produtos():
             empresa_03 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, estoque_de_clientes))) # Seleciona o estoque
             empresa_03.click()
 
-        if tipo == 'MATERIAL DE USO E CONSUMO':
+        if tipo == 'MATERIAL DE USO E CONSUMO' or tipo == 'USO E CONSUMO COM ESTOQUE':
             empresa_02 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, estoque_uso_e_consumo))) # Seleciona o estoque
             empresa_02.click()
 
@@ -144,10 +144,6 @@ def criar_janela_cadastro_produtos():
 
             empresa_03 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, esoque_retorno_terceiros))) # Seleciona o estoque
             empresa_03.click()
-
-        if tipo == 'USO E CONSUMO COM ESTOQUE':
-            empresa_02 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, estoque_uso_e_consumo))) # Seleciona o estoque
-            empresa_02.click()  
 
         if tipo == 'ATIVO IMOBILIZADO':
             empresa_02 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, ativo_imobilizados))) # Seleciona o estoque
@@ -224,6 +220,10 @@ def criar_janela_cadastro_produtos():
             custo_02 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="dataReferenciaCusto_id"]'))) # data referencia
             custo_02.send_keys(dia_atual)
 
+            ressup_prod = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="atualizaCustoPadraoCompra_id"]'))) # Método de suprimento
+            select_ressup_prod = Select(ressup_prod)
+            select_ressup_prod.select_by_visible_text('Atualiza custo padrão de compra com base no custo de reposição')
+
             salvar_produto()
         else:
             salvar_produto()
@@ -284,11 +284,7 @@ def criar_janela_cadastro_produtos():
                     
         cadastrar_produto(ncm_excel, cod, descricao, und, tipo, grupo, metodo, descricao_fiscal, pcp_ressuprimento, custo_padrao, dia_atual, financeiro_excel)
 
-
-def criar_janela_planilha_cadastro():
-    os.startfile(arquivo_excel)
-
-
+# Adicionar LM ao produto
 def criar_janela_lista_de_materiais():
     df = pd.read_excel(arquivo_excel, sheet_name='LM')
     
@@ -414,7 +410,7 @@ def criar_janela_lista_de_materiais():
                             
         cadastrar_lm(item_lista, qtde_item_lista, natureza, posicao)
 
-
+# Adicionar RO ao produto
 def criar_janela_rp():
     df = pd.read_excel(arquivo_excel, sheet_name='RP')
     
@@ -545,11 +541,15 @@ def criar_janela_rp():
         adicionar_rp_no_produto(rp_padrao)
         exportar_rp_para_os_itens(rp_padrao,cod)
 
+# Abrir planilha de cadastro de itens
+def criar_janela_planilha_cadastro():
+    os.startfile(arquivo_excel)
 
+# Abrir planilha de edição de itens
 def criar_janela_planilha_edicao():
     os.startfile(arquivo_excel_01)
 
-
+# Função editar aba inicial
 def editar_itens_geral():
     df = pd.read_excel(arquivo_excel_01, sheet_name='Principal')
 
@@ -638,7 +638,7 @@ def editar_itens_geral():
         acessar_produto(cod)
         edicao_geral(cod_editado,descricao,und,tipo,grupo,metodo)
 
-
+# Função editar aba empresas
 def editar_empresas():
     df = pd.read_excel(arquivo_excel_01, sheet_name='Empresas')
 
@@ -702,33 +702,349 @@ def editar_empresas():
         tela_produtos()
         acessar_produto(cod, empresa_excel)
 
+# Função editar aba fiscal
+def editar_fiscal():
+    df = pd.read_excel(arquivo_excel_01, sheet_name='Fiscal')
 
+    servico = Service(ChromeDriverManager().install())
+    navegador = webdriver.Chrome(service=servico)
 
+    usuario = entry_usuario.get() 
+    senha = entry_senha.get()
 
+    index = 0
 
+    def login(usuario, senha):
+            tela_usuario = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="campologin"]')))
+            tela_usuario.send_keys(usuario)
+            tela_senha = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="login_form"]/div/main/div/section[3]/div[2]/input')))
+            tela_senha.send_keys(senha)    
+            tela_senha.send_keys(Keys.RETURN)
 
+    def entrar_nomus():
+        navegador.get('https://tspro.nomus.com.br/tspro/Login.do?metodo=PreLogin') # Tela inicial
+        login(usuario, senha)
 
+    def tela_produtos():
+        navegador.get('https://tspro.nomus.com.br/tspro/Produto.do?metodo=Pesquisar') # Produtos
 
+    def acessar_produto(cod):
+        produto_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'divMinimizavel')]/table/tbody/tr[2]/td[1]/input")))
+        produto_01.clear()
+        produto_01.send_keys(cod)
 
+        botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_pesquisar"]'))) # Buscar produtos
+        botao_buscar.click()
 
+        botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, f"//*[text()='{cod}']"))) #Seleciona o elemento
+        botao_buscar.click()
 
+        xpaths = ['//*[@id="produtoAtivoAguardandoLiberacao_itemSubMenu_editarProduto"]', '//*[@id="produtoAtivoLiberado_itemSubMenu_editarProduto"]']
+        for xpath in xpaths:
+            try:
+                botao_entrar_editar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+                botao_entrar_editar.click()
+                break
+            except Exception:
+                pass
+
+    def edicao_fiscal_aa(descricao_fiscal, origem, ncm_excel, financeiro_excel):
+        fiscal = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="ui-id-29"]'))) # Fiscal
+        fiscal.click()
+
+        fiscal_02 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="descricaoNFe"]'))) # Descrição fiscal
+        fiscal_02.clear()
+        fiscal_02.send_keys(descricao_fiscal)
+        
+        fiscal_04_select = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//table/tbody/tr[9]/td[2]/select'))) # origem do produto
+        select_fiscal_04 = Select(fiscal_04_select)
+        select_fiscal_04.select_by_visible_text(origem)
+
+        ncm_escolher = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="id_nomeNcm"]'))) # Descrição fiscal
+        ncm_escolher.clear()
+        ncm_escolher.send_keys(ncm_excel)
+        time.sleep(1)
+        ncm_escolher.send_keys(Keys.RETURN) 
+        time.sleep(0.5)   
+
+        classe_financeira_selecionar_select = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="id_idClassificacaoFinanceiraPadrao"]'))) # Unidade de medida
+        select_classe_financeira_selecionar = Select(classe_financeira_selecionar_select)
+        select_classe_financeira_selecionar.select_by_visible_text(financeiro_excel)
+
+        salvar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_salvar"]'))) # Salvar cadastro
+        salvar.click()
+
+    entrar_nomus()
+    
+    for index, row in df.iterrows():
+        cod = row['Código']
+        origem = row['Origem']
+        descricao_fiscal = row['Descrição Fiscal']
+        ncm_excel = row['NCM']
+        financeiro_excel = row['Classificacao']
+                    
+        tela_produtos()
+        acessar_produto(cod)
+        edicao_fiscal_aa(descricao_fiscal, origem, ncm_excel, financeiro_excel)
+
+# Função editar aba PCP
+def editar_pcp():
+    df = pd.read_excel(arquivo_excel_01, sheet_name='PCP')
+
+    servico = Service(ChromeDriverManager().install())
+    navegador = webdriver.Chrome(service=servico)
+
+    usuario = entry_usuario.get() 
+    senha = entry_senha.get()
+
+    index = 0
+
+    def login(usuario, senha):
+            tela_usuario = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="campologin"]')))
+            tela_usuario.send_keys(usuario)
+            tela_senha = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="login_form"]/div/main/div/section[3]/div[2]/input')))
+            tela_senha.send_keys(senha)    
+            tela_senha.send_keys(Keys.RETURN)
+
+    def entrar_nomus():
+        navegador.get('https://tspro.nomus.com.br/tspro/Login.do?metodo=PreLogin') # Tela inicial
+        login(usuario, senha)
+
+    def tela_produtos():
+        navegador.get('https://tspro.nomus.com.br/tspro/Produto.do?metodo=Pesquisar') # Produtos
+
+    def acessar_produto(cod):
+        produto_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'divMinimizavel')]/table/tbody/tr[2]/td[1]/input")))
+        produto_01.clear()
+        produto_01.send_keys(cod)
+
+        botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_pesquisar"]'))) # Buscar produtos
+        botao_buscar.click()
+
+        botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, f"//*[text()='{cod}']"))) #Seleciona o elemento
+        botao_buscar.click()
+
+        xpaths = ['//*[@id="produtoAtivoAguardandoLiberacao_itemSubMenu_editarProduto"]', '//*[@id="produtoAtivoLiberado_itemSubMenu_editarProduto"]']
+        for xpath in xpaths:
+            try:
+                botao_entrar_editar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+                botao_entrar_editar.click()
+                break
+            except Exception:
+                pass
+
+    def editar_pcp_aa(pcp_ressuprimento):
+        pcp_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="ui-id-34"]'))) # PCP
+        pcp_01.click()
+
+        pcp_01_select = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="tr_politica_ressuprimento"]/td[2]/select'))) # PCP ressuprimento
+        select_pcp_01 = Select(pcp_01_select)
+        select_pcp_01.select_by_visible_text(pcp_ressuprimento)
+
+        salvar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_salvar"]'))) # Salvar cadastro
+        salvar.click()
+    
+    entrar_nomus()
+
+    for index, row in df.iterrows():
+        cod = row['Código']
+        pcp_ressuprimento = row['PCP Ressuprimento']
+        
+        tela_produtos()
+        acessar_produto(cod)
+        editar_pcp_aa(pcp_ressuprimento)
+
+# Função editar aba MRP
+def editar_mrp():
+    df = pd.read_excel(arquivo_excel_01, sheet_name='MRP')
+
+    servico = Service(ChromeDriverManager().install())
+    navegador = webdriver.Chrome(service=servico)
+
+    usuario = entry_usuario.get() 
+    senha = entry_senha.get()
+    pcp_ressuprimento = 'Ressuprimento para estoque através do plano de produção e MRP'
+
+    index = 0
+    
+    def login(usuario, senha):
+            tela_usuario = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="campologin"]')))
+            tela_usuario.send_keys(usuario)
+            tela_senha = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="login_form"]/div/main/div/section[3]/div[2]/input')))
+            tela_senha.send_keys(senha)    
+            tela_senha.send_keys(Keys.RETURN)
+
+    def entrar_nomus():
+        navegador.get('https://tspro.nomus.com.br/tspro/Login.do?metodo=PreLogin') # Tela inicial
+        login(usuario, senha)
+
+    def tela_produtos():
+        navegador.get('https://tspro.nomus.com.br/tspro/Produto.do?metodo=Pesquisar') # Produtos
+
+    def acessar_produto(cod):
+        produto_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'divMinimizavel')]/table/tbody/tr[2]/td[1]/input")))
+        produto_01.clear()
+        produto_01.send_keys(cod)
+
+        botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_pesquisar"]'))) # Buscar produtos
+        botao_buscar.click()
+
+        botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, f"//*[text()='{cod}']"))) #Seleciona o elemento
+        botao_buscar.click()
+
+        xpaths = ['//*[@id="produtoAtivoAguardandoLiberacao_itemSubMenu_editarProduto"]', '//*[@id="produtoAtivoLiberado_itemSubMenu_editarProduto"]']
+        for xpath in xpaths:
+            try:
+                botao_entrar_editar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+                botao_entrar_editar.click()
+                break
+            except Exception:
+                pass
+
+    def editar_mrp_aa(pcp_ressuprimento, multiplo, minimo, maximo, seguranca, est_maximo):
+        pcp_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="ui-id-34"]'))) # PCP
+        pcp_01.click()
+
+        pcp_01_select = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="tr_politica_ressuprimento"]/td[2]/select'))) # PCP ressuprimento
+        select_pcp_01 = Select(pcp_01_select)
+        select_pcp_01.select_by_visible_text(pcp_ressuprimento)
+
+        mrp = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="ui-id-35"]'))) # MRP
+        mrp.click()
+
+        mrp_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="tr_lote_multiplo"]/td[2]/input'))) # lote multiplo
+        mrp_01.send_keys(multiplo)
+
+        mrp_02 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="tr_lote_minimo"]/td[2]/input'))) # lote minimo
+        mrp_02.send_keys(minimo)
+
+        mrp_03 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="tr_lote_maximo"]/td[2]/input'))) # lote maximo
+        mrp_03.send_keys(maximo)
+
+        mrp_04 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="tr_estoque_de_seguranca"]/td[2]/input'))) # estoque de seguraça
+        mrp_04.send_keys(seguranca)
+
+        mrp_05 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="tr_estoque_maximo"]/td[2]/input'))) # estoque maximo
+        mrp_05.send_keys(est_maximo)
+
+        salvar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_salvar"]'))) # Salvar cadastro
+        salvar.click()
+
+    entrar_nomus()
+
+    for index, row in df.iterrows():
+        cod = row['Código']
+        multiplo = row['multiplo']
+        minimo = row['minimo']
+        maximo = row['maximo']
+        seguranca = row['est. Seguranca']
+        est_maximo = row['est. Maximo']
+        
+        tela_produtos()
+        acessar_produto(cod)
+        editar_mrp_aa(pcp_ressuprimento, multiplo, minimo, maximo, seguranca, est_maximo)
+
+# Função editar aba custos
+def editar_custos():
+    df = pd.read_excel(arquivo_excel_01, sheet_name='Custo')
+
+    servico = Service(ChromeDriverManager().install())
+    navegador = webdriver.Chrome(service=servico)
+
+    usuario = entry_usuario.get() 
+    senha = entry_senha.get()
+    hoje = datetime.today()
+    dia = hoje.strftime("%d")
+    mes = hoje.strftime("%m")
+    ano = hoje.year
+    dia_atual = f'{dia}{mes}{ano}'
+
+    index = 0
+
+    def login(usuario, senha):
+            tela_usuario = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="campologin"]')))
+            tela_usuario.send_keys(usuario)
+            tela_senha = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="login_form"]/div/main/div/section[3]/div[2]/input')))
+            tela_senha.send_keys(senha)    
+            tela_senha.send_keys(Keys.RETURN)
+
+    def entrar_nomus():
+        navegador.get('https://tspro.nomus.com.br/tspro/Login.do?metodo=PreLogin') # Tela inicial
+        login(usuario, senha)
+
+    def tela_produtos():
+        navegador.get('https://tspro.nomus.com.br/tspro/Produto.do?metodo=Pesquisar') # Produtos
+
+    def acessar_produto(cod):
+        produto_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, 'divMinimizavel')]/table/tbody/tr[2]/td[1]/input")))
+        produto_01.clear()
+        produto_01.send_keys(cod)
+
+        botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_pesquisar"]'))) # Buscar produtos
+        botao_buscar.click()
+
+        botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, f"//*[text()='{cod}']"))) #Seleciona o elemento
+        botao_buscar.click()
+
+        xpaths = ['//*[@id="produtoAtivoAguardandoLiberacao_itemSubMenu_editarProduto"]', '//*[@id="produtoAtivoLiberado_itemSubMenu_editarProduto"]']
+        for xpath in xpaths:
+            try:
+                botao_entrar_editar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, xpath)))
+                botao_entrar_editar.click()
+                break
+            except Exception:
+                pass
+
+    def editar_custo(custo_padrao, dia_atual):
+        metodo_produto = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="idPadraoSuprimento"]'))) # Método de suprimento
+        select_metodo_produto = Select(metodo_produto)
+        select_metodo_produto.select_by_visible_text('Comprado')
+
+        custo = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="ui-id-37"]'))) # custo
+        custo.click()
+
+        custo_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="custoPadraoCompra_id"]'))) # custo padrao
+        custo_01.send_keys(custo_padrao)
+
+        custo_02 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="dataReferenciaCusto_id"]'))) # data referencia
+        custo_02.send_keys(dia_atual)
+
+        ressup_prod = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="atualizaCustoPadraoCompra_id"]'))) # Método de suprimento
+        select_ressup_prod = Select(ressup_prod)
+        select_ressup_prod.select_by_visible_text('Atualiza custo padrão de compra com base no custo de reposição')
+
+        salvar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_salvar"]'))) # Salvar cadastro
+        salvar.click()
+
+    entrar_nomus()
+
+    for index, row in df.iterrows():
+        cod = row['Código']
+        custo_padrao = row['Custo Padrao']
+        
+        tela_produtos()
+        acessar_produto(cod)
+        editar_custo(custo_padrao, dia_atual)
+
+# Tela de edição de itens
 def criar_janela_menu_edicao():
     janela = tk.Tk()
     janela.title("Edição de itens")
     janela.geometry("400x450")
     janela.config(bg="lightblue")  
-    tk.Label(janela, text="O que será editado ?", font=("Arial", 14), bg="lightblue").pack(pady=10)
+    tk.Label(janela, text="Qual aba será editada ?", font=("Arial", 14), bg="lightblue").pack(pady=10)
 
     tk.Button(janela, text="Abrir planilha", command=criar_janela_planilha_edicao, width=20, bg="RoyalBlue1", fg="black").pack(pady=10)
     tk.Button(janela, text="Geral", command=editar_itens_geral, width=20, bg="turquoise1", fg="black").pack(pady=10)
     tk.Button(janela, text="Empresas", command=editar_empresas, width=20, bg="turquoise2", fg="black").pack(pady=10)
-    tk.Button(janela, text="Fiscal", command=None, width=20, bg="turquoise3", fg="black").pack(pady=10)
-    tk.Button(janela, text="PCP", command=None, width=20, bg="PaleTurquoise2", fg="black").pack(pady=10)
-    tk.Button(janela, text="MRP", command=None, width=20, bg="SkyBlue1", fg="black").pack(pady=10)
-    tk.Button(janela, text="Custos", command=None, width=20, bg="SteelBlue1", fg="black").pack(pady=10)
+    tk.Button(janela, text="Fiscal", command=editar_fiscal, width=20, bg="turquoise3", fg="black").pack(pady=10)
+    tk.Button(janela, text="PCP", command=editar_pcp, width=20, bg="PaleTurquoise2", fg="black").pack(pady=10)
+    tk.Button(janela, text="MRP", command=editar_mrp, width=20, bg="SkyBlue1", fg="black").pack(pady=10)
+    tk.Button(janela, text="Custos", command=editar_custos, width=20, bg="SteelBlue1", fg="black").pack(pady=10)
 
     janela.mainloop()
 
+# Tela de cadastro de produtos
 def criar_janela_cadastro():
     janela_01 = tk.Tk()
     janela_01.title("Edição de itens")
@@ -743,6 +1059,7 @@ def criar_janela_cadastro():
 
     janela_01.mainloop()
 
+# Tela inicial do app
 app = tk.Tk()
 app.title("Engenharia")
 app.geometry("400x400")
