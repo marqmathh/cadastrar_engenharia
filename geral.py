@@ -7,7 +7,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 import tkinter as tk
 from tkinter import messagebox, ttk
-import os, shutil, win32com.client, time, ctypes, pyautogui, math, requests
+import os, shutil, win32com.client, time, ctypes, pyautogui, math, requests, patoolib
 from datetime import datetime
 import pandas as pd
 from openpyxl import load_workbook
@@ -161,11 +161,11 @@ def atualizar_planilhas_versao_2():
             'Z:\\ISO 9000 - SGQ\\12-SISTEMA\\Sistema\\planilhas\\OP_porcentagem.xlsx',
             'Z:\\ISO 9000 - SGQ\\12-SISTEMA\\Sistema\\planilhas\\Vendas.xlsx',
             'Z:\\ISO 9000 - SGQ\\12-SISTEMA\\Sistema\\planilhas\\Indicadores.xlsx',
+            'Z:\\ISO 9000 - SGQ\\9 - PPCP\\.PCP\\Controle\\Controle.xlsm',
             'Z:\\ISO 9000 - SGQ\\12-SISTEMA\\Sistema\\planilhas\\Setores de estoque.xlsx'
         ]
         planilhas_especiais = [
             # 'Z:\\ISO 9000 - SGQ\\6-PROCESSO SUPRIMENTOS\\REGISTROS\\TB-06_AvalProvedoresExternos-Rev05.xlsx',
-            'Z:\\ISO 9000 - SGQ\\9 - PPCP\\.PCP\\Controle\\Controle.xlsm',
             'Z:\\PUBLICO\\Araujo\\Planilhas-Indicadores\\Gráficos-IDs-PCP-2024 - IDs 04a 04b 13b.xlsx',
             'Z:\\PUBLICO\\Araujo\\Planilhas-Indicadores\\Gráfico-ID-Produção-2024 - ID-02-01-10-2024.xlsx',
             'Z:\\PUBLICO\\Araujo\\Planilhas-Indicadores\\Graficos-IDs-Compras-2024 - IDs 09 13a 13c.xlsx',
@@ -2123,8 +2123,6 @@ def abc_geral():
     tk.Button(app, text="ABC - Fornecedores", command=criar_janela_fornecedores, width=20, bg="blue", fg="white").pack(pady=10)
     tk.Button(app, text="ABC - OP's", command=criar_janela_ordens, width=20, bg="yellow", fg="black").pack(pady=10)
 
-    tk.Button(app, text="Sair", command=app.quit, bg="red", fg="white", width=20).pack(pady=10)
-
     app.mainloop()
 
 def calculos_geral():
@@ -2140,6 +2138,25 @@ def calculos_geral():
         janela_mangueiras.title("Mangueiras")
         janela_mangueiras.geometry("500x650")
         criar_janela_mangueira(janela_mangueiras)
+
+    # def abrir_bracos():
+    #     janela_bracos = tk.Toplevel(app)
+    #     janela_bracos.title("Braços")
+    #     janela_bracos.geometry("700x900")
+    #     criar_janela_bracos(janela_bracos)
+
+    # def abrir_succao():
+    #     janela_succao = tk.Toplevel(app)
+    #     janela_succao.title("Sucção")
+    #     janela_succao.geometry("400x300")
+    #     tk.Label(janela_succao, text="Funcionalidade de Sucção em desenvolvimento.", pady=20).pack()
+
+    # def abrir_perda_de_carga():
+        # janela_succao = tk.Toplevel(app)
+        # janela_succao.title("Perda de Carga")
+        # janela_succao.geometry("400x300")
+        # tk.Label(janela_succao, text="Funcionalidade de Perda de carga em desenvolvimento.", pady=20).pack()
+
 
     # Função para criar a janela de Tabela de Pesos
     def criar_janela_tabela_pesos(janela):
@@ -2740,7 +2757,6 @@ def calculos_geral():
 
             except ValueError:
                 resultado_box.delete("1.0", tk.END)
-                resultado_box.insert(tk.END, "Erro: Certifique-se de que todos os campos estão preenchidos corretamente.")
 
         # Entrada de Dados
         tk.Label(janela, text="Diâmetro:").grid(row=0, column=0, pady=5, sticky="e")
@@ -2790,9 +2806,7 @@ def calculos_geral():
     tk.Label(app, text="Selecione o calculo desejado:", font=("Arial", 14)).pack(pady=10)
 
     tk.Button(app, text="Calcular Pesos", command=abrir_tabela_pesos, width=20, bg="green", fg="white").pack(pady=10)
-    tk.Button(app, text="Calcular Mangueiras", command=abrir_mangueiras, width=20, bg="blue", fg="white").pack(pady=10)
-
-    tk.Button(app, text="Sair", command=app.quit, bg="red", fg="white", width=20).pack(pady=10)
+    # tk.Button(app, text="Calcular Mangueiras", command=abrir_mangueiras, width=20, bg="blue", fg="white").pack(pady=10)
 
     app.mainloop()
 
@@ -3549,9 +3563,126 @@ def extracao_lm_excel():
 
     app.mainloop()
 
+def baixar_desenhos():
+    def entrar_lm_e_enviar_para_o_excel():
+        servico = Service(ChromeDriverManager().install())
+        navegador = webdriver.Chrome(service=servico) 
+        usuario = entry_usuario.get() 
+        senha = entry_senha.get()
+        op = entry_op.get()
+
+        def login(usuario, senha):
+            tela_usuario = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="campologin"]')))
+            tela_usuario.send_keys(usuario)
+            tela_senha = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="login_form"]/div/main/div/section[3]/div[2]/input')))
+            tela_senha.send_keys(senha)    
+            tela_senha.send_keys(Keys.RETURN)
+
+        def entrar_nomus():
+            navegador.get('https://tspro.nomus.com.br/tspro/Login.do?metodo=PreLogin') # Tela inicial
+            login(usuario, senha)
+
+        def tela_ordens():
+            navegador.get('https://tspro.nomus.com.br/tspro/Ordem.do?metodo=pesquisarPaginado') # Produtos
+
+        def entra_ordem(op):
+            botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_exibir_todos"]'))) # Buscar produtos
+            botao_buscar.click()
+            produto_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, "/html/body/div[2]/div[4]/div/form/div[6]/table/tbody/tr[2]/td/table/tbody/tr[2]/td/div/table/tbody/tr[2]/td[1]/input"))) # Código do produto
+            produto_01.send_keys(op)
+            botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_pesquisarpaginado"]'))) # Buscar produtos
+            botao_buscar.click()
+            botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, f"//*[text()='{op}']"))) #Seleciona o elemento
+            botao_buscar.click()
+            botao_buscar_01 = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, "//*[contains(@id, '_itemSubMenu_gerarZipArquivosAnexosOrdem')]"))) # Buscar produtos
+            botao_buscar_01.click()
+            time.sleep(5)
+            botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="marcaredesmarcar"]'))) # Buscar produtos
+            botao_buscar.click()
+            time.sleep(0.5)
+            botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_Acoes"]'))) # Buscar produtos
+            botao_buscar.click()
+            time.sleep(0.5)
+            botao_buscar = WebDriverWait(navegador, 10).until(EC.element_to_be_clickable((By.XPATH, '//*[@id="botao_botao.gerarpdfordensemlote"]'))) # Buscar produtos
+            botao_buscar.click()
+            time.sleep(5)
+            navegador.quit()
+
+        def winrar():
+            def extrair_arquivos(arquivo_rar, pasta_destino):
+                try:
+                    temp_pasta = os.path.join(pasta_destino, "temp")
+                    os.makedirs(temp_pasta, exist_ok=True)
+                    patoolib.extract_archive(arquivo_rar, outdir=temp_pasta)
+                    for root, _, files in os.walk(temp_pasta):
+                        for file in files:
+                            origem = os.path.join(root, file)
+                            destino = os.path.join(pasta_destino, file)
+                            if os.path.exists(destino):
+                                nome, extensao = os.path.splitext(file)
+                                contador = 1
+                                novo_nome = f"{nome}_{contador}{extensao}"
+                                while os.path.exists(os.path.join(pasta_destino, novo_nome)):
+                                    contador += 1
+                                    novo_nome = f"{nome}_{contador}{extensao}"
+                                destino = os.path.join(pasta_destino, novo_nome)
+                            shutil.move(origem, destino)
+                    shutil.rmtree(temp_pasta)
+                    print(f"Arquivos extraídos de {arquivo_rar} para {pasta_destino}.")
+                except Exception as e:
+                    print(f"Erro ao extrair {arquivo_rar}: {e}")
+            pasta_downloads = os.path.expanduser("~/Downloads")
+            pasta_destino = os.path.join(pasta_downloads, "Extraidos")
+            os.makedirs(pasta_destino, exist_ok=True)
+            for arquivo in os.listdir(pasta_downloads):
+                if arquivo.endswith(".rar") or arquivo.endswith(".zip"):
+                    caminho_arquivo = os.path.join(pasta_downloads, arquivo)
+                    extrair_arquivos(caminho_arquivo, pasta_destino)
+            for arquivo in os.listdir(pasta_downloads):
+                caminho_arquivo = os.path.join(pasta_downloads, arquivo)
+                try:
+                    if os.path.isfile(caminho_arquivo):
+                        os.remove(caminho_arquivo)
+                        print(f"Deletado: {caminho_arquivo}")
+                except Exception as e:
+                    print(f"Erro ao deletar {caminho_arquivo}: {e}")
+
+        entrar_nomus()
+        tela_ordens()
+        entra_ordem(op)
+        winrar()
+
+    app = tk.Tk()
+    app.title("Engenharia")
+    app.geometry("400x350")
+    app.config(bg="lightblue")  
+
+    tk.Label(app, text="Selecione a opção desejada: ", font=("Arial", 14), bg="lightblue").pack(pady=5)
+    label_op = tk.Label(app, text="Ordem de produção:", bg="lightblue")
+    label_op.pack(padx=5, pady=5)
+
+    entry_op = tk.Entry(app, bg="white", bd=2, relief="solid", justify="center")
+    entry_op.pack(padx=5, pady=5)
+
+    label_usuario = tk.Label(app, text="Usuário:", bg="lightblue")
+    label_usuario.pack(padx=5, pady=5)
+
+    entry_usuario = tk.Entry(app, bg="white", bd=2, relief="solid", justify="center")
+    entry_usuario.pack(padx=5, pady=5)
+
+    label_senha = tk.Label(app, text="Senha:",  bg="lightblue")
+    label_senha.pack(padx=5, pady=5)
+
+    entry_senha = tk.Entry(app, show="*", bg="white", bd=2, relief="solid", justify="center")
+    entry_senha.pack(padx=5, pady=5)
+
+    tk.Button(app, text="Baixar OP's e anexos", command=entrar_lm_e_enviar_para_o_excel, width=20, bg="gold", fg="black").pack(pady=10)
+
+    app.mainloop()
+
 janela = tk.Tk()
 janela.title("Projetos Python")
-janela.geometry("300x320")
+janela.geometry("300x350")
 janela.config(bg="lightblue") 
 
 tk.Label(janela, text="Selecione a aplicação desejada", font=("Arial", 14), bg="lightblue").pack(pady=10)
@@ -3562,5 +3693,6 @@ tk.Button(janela, text="Gerar planilhas de ABC", command=abc_geral, width=30, bg
 tk.Button(janela, text="Gerar planilhas de estoque", command=setores_de_estoque_geral, width=30, bg="blue", fg="white").pack(pady=5)
 tk.Button(janela, text="Abrir Calculos", command=calculos_geral, width=30, bg="blue", fg="white").pack(pady=5)
 tk.Button(janela, text="Itens importados", command=importados_geral, width=30, bg="blue", fg="white").pack(pady=5)
+tk.Button(janela, text="Baixar Ordens e anexos", command=baixar_desenhos, width=30, bg="blue", fg="white").pack(pady=5)
 
 janela.mainloop()
